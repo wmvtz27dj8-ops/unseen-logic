@@ -1,73 +1,562 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-theme="obsidian-4k">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Unseen Logic — 3D Formula Engine</title>
-  <style>
-    * { margin: 0; padding: 0; box-sizing: border-box; }
-    body {
-      background: #050508;
-      color: #f5f5f7;
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-      overflow: hidden;
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0" />
+  <meta name="description" content="Unseen Logic — Spatial 4K 3D Discovery Engine & Autonomous Formula Construct Synthesizer. Architected by G. U. Sanjiv." />
+  <meta name="author" content="G. U. Sanjiv" />
+  <meta name="theme-color" content="#05060a" />
+  <title>Unseen Logic — Spatial 4K Theorem Engine &amp; Autonomous Formula Synthesizer</title>
+
+  <link rel="stylesheet" href="./styles.css" />
+
+  <script type="importmap">
+    {
+      "imports": {
+        "three": "https://unpkg.com/three@0.187.0/build/three.module.js",
+        "three/addons/": "https://unpkg.com/three@0.187.0/examples/jsm/"
+      }
     }
-    canvas { display: block; }
-    .hud {
-      position: absolute;
-      top: 40px;
-      left: 40px;
-      pointer-events: none;
-    }
-    h1 { font-size: 2.2rem; font-weight: 600; letter-spacing: -0.03em; }
-    p { color: #86868b; margin-top: 8px; font-size: 1rem; }
-  </style>
+  </script>
 </head>
 <body>
-  <div class="hud">
-    <h1>Unseen Logic</h1>
-    <p>Live 3D Spatial Formula Engine — Deployed via GitHub Pages</p>
+  <!-- Boot Preloader -->
+  <div id="boot-loader" class="boot-loader" role="status" aria-live="polite">
+    <div class="boot-core">
+      <div class="boot-ring"></div>
+      <div class="boot-ring boot-ring-inner"></div>
+      <span class="boot-emblem">UL</span>
+    </div>
+    <p id="boot-status-text" class="boot-status">Initializing 4K Spatial Compute Pipeline...</p>
+    <div class="boot-bar-track">
+      <div id="boot-progress-bar" class="boot-bar-fill"></div>
+    </div>
   </div>
 
-  <script type="module">
-    import * as THREE from 'https://unpkg.com/three@0.170.0/build/three.module.js';
+  <!-- Fixed Full-Viewport 4K WebGL/WebGPU Canvas Stage -->
+  <div id="webgl-stage" class="webgl-stage" aria-hidden="true">
+    <canvas id="spatial-canvas"></canvas>
+    <div class="vignette-overlay"></div>
+  </div>
 
-    const scene = new THREE.Scene();
-    const camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 100);
-    camera.position.z = 4;
+  <!-- Top Apple-Grade Glassmorphic HUD -->
+  <header id="top-hud" class="top-hud glass-surface" role="banner">
+    <div class="hud-left">
+      <a href="#section-hero" id="nav-brand" class="brand-lockup" aria-label="Unseen Logic Home">
+        <span class="brand-glyph" aria-hidden="true">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75">
+            <polygon points="12 2 22 8.5 22 15.5 12 22 2 15.5 2 8.5 12 2"></polygon>
+            <line x1="12" y1="22" x2="12" y2="15.5"></line>
+            <polyline points="22 8.5 12 15.5 2 8.5"></polyline>
+            <polyline points="2 15.5 12 8.5 22 15.5"></polyline>
+            <line x1="12" y1="2" x2="12" y2="8.5"></line>
+          </svg>
+        </span>
+        <span class="brand-title">UNSEEN LOGIC</span>
+      </a>
 
-    const renderer = new THREE.WebGLRenderer({ antialias: true });
-    renderer.setSize(window.innerWidth, window.innerHeight);
-    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
-    document.body.appendChild(renderer.domElement);
+      <div id="active-world-badge" class="world-badge" aria-live="polite">
+        <span class="pulse-dot"></span>
+        <span id="active-world-title">Spatial Singularity</span>
+        <span id="active-world-year" class="world-year">ARCHIVE // 00</span>
+      </div>
+    </div>
 
-    const geometry = new THREE.TorusKnotGeometry(1, 0.32, 180, 32);
-    const material = new THREE.MeshStandardMaterial({
-      color: 0x4f9cf9,
-      roughness: 0.2,
-      metalness: 0.85,
-      wireframe: true
-    });
-    const mesh = new THREE.Mesh(geometry, material);
-    scene.add(mesh);
+    <nav class="hud-center" aria-label="Primary Sections">
+      <a href="#section-wessel" class="hud-link" data-nav="wessel">Archive</a>
+      <a href="#section-lab" class="hud-link" data-nav="lab">Formula Machine</a>
+      <a href="#section-credits" class="hud-link" data-nav="credits">Attribution</a>
+    </nav>
 
-    const light = new THREE.PointLight(0xffffff, 40);
-    light.position.set(3, 3, 4);
-    scene.add(light);
+    <div class="hud-right">
+      <button id="hud-telemetry-toggle" class="icon-btn active" type="button" title="Toggle Telemetry &amp; Sliders" aria-label="Toggle Telemetry Dock">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+          <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"></polyline>
+        </svg>
+      </button>
 
-    window.addEventListener('resize', () => {
-      camera.aspect = window.innerWidth / window.innerHeight;
-      camera.updateProjectionMatrix();
-      renderer.setSize(window.innerWidth, window.innerHeight);
-    });
+      <button id="hud-audio-toggle" class="icon-btn" type="button" title="Toggle Harmonic Synthesis Audio" aria-label="Toggle Harmonic Audio">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+          <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon>
+          <path d="M15.54 8.46a5 5 0 0 1 0 7.07"></path>
+          <path d="M19.07 4.93a10 10 0 0 1 0 14.14"></path>
+        </svg>
+      </button>
 
-    function animate() {
-      requestAnimationFrame(animate);
-      mesh.rotation.x += 0.005;
-      mesh.rotation.y += 0.008;
-      renderer.render(scene, camera);
-    }
-    animate();
-  </script>
+      <button id="hud-vault-btn" class="icon-btn vault-trigger" type="button" title="Open Theory Vault" aria-label="Open Theory Vault">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+          <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path>
+          <polyline points="3.27 6.96 12 12.01 20.73 6.96"></polyline>
+          <line x1="12" y1="22.08" x2="12" y2="12"></line>
+        </svg>
+        <span id="hud-vault-count" class="badge-count">0</span>
+      </button>
+
+      <button id="hud-settings-btn" class="icon-btn" type="button" title="API &amp; 4K Render Settings" aria-label="Open Settings">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+          <circle cx="12" cy="12" r="3"></circle>
+          <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
+        </svg>
+      </button>
+
+      <button id="hud-auth-btn" class="pill-btn" type="button" aria-label="Researcher Login">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+          <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+          <circle cx="12" cy="7" r="4"></circle>
+        </svg>
+        <span id="hud-auth-label">Sign In</span>
+      </button>
+    </div>
+  </header>
+
+  <!-- Right Chapter Rail -->
+  <aside id="chapter-rail" class="chapter-rail" aria-label="Spatial Chapters">
+    <button class="chapter-dot active" data-target="hero" data-label="00 // Origin" aria-label="Jump to Origin"></button>
+    <button class="chapter-dot" data-target="wessel" data-label="01 // Wessel 1799" aria-label="Jump to Caspar Wessel"></button>
+    <button class="chapter-dot" data-target="mengoli" data-label="02 // Mengoli 1650" aria-label="Jump to Pietro Mengoli"></button>
+    <button class="chapter-dot" data-target="majorana" data-label="03 // Majorana 1930s" aria-label="Jump to Ettore Majorana"></button>
+    <button class="chapter-dot" data-target="zhenyi" data-label="04 // Zhenyi 1790s" aria-label="Jump to Wang Zhenyi"></button>
+    <button class="chapter-dot" data-target="peterson" data-label="05 // Peterson 1853" aria-label="Jump to Karl Peterson"></button>
+    <button class="chapter-dot" data-target="skinner" data-label="06 // Skinner 1935" aria-label="Jump to Francis Skinner"></button>
+    <button class="chapter-dot" data-target="lab" data-label="07 // Formula Engine" aria-label="Jump to Formula Engine"></button>
+    <button class="chapter-dot" data-target="credits" data-label="08 // Creator" aria-label="Jump to Creator Credits"></button>
+  </aside>
+
+  <!-- Bottom Left Telemetry Readout -->
+  <aside id="telemetry-dock" class="telemetry-dock glass-surface" aria-label="Engine Telemetry">
+    <div class="telemetry-row">
+      <span class="telemetry-key">RES</span>
+      <span id="resolution-badge" class="telemetry-val">4K DPR 2.0</span>
+      <span class="telemetry-sep">|</span>
+      <span class="telemetry-key">FPS</span>
+      <span id="fps-counter" class="telemetry-val">60</span>
+      <span class="telemetry-sep">|</span>
+      <span class="telemetry-key">CALLS</span>
+      <span id="draw-calls-counter" class="telemetry-val">0</span>
+    </div>
+    <div id="formula-readout" class="formula-live-bar">
+      z = r · (cos φ + i sin φ) ⊗ e^(kθ)
+    </div>
+  </aside>
+
+  <!-- Bottom Right Live Interactive Parameter Sliders -->
+  <aside id="parameter-dock" class="parameter-dock glass-surface" aria-label="Live Mathematical Parameters">
+    <div class="dock-header">
+      <span class="dock-title">LIVE PARAMETERS</span>
+      <div class="dock-actions">
+        <button id="randomize-params-btn" class="mini-btn" type="button" title="Perturb Variables">Perturb</button>
+        <button id="reset-params-btn" class="mini-btn" type="button" title="Reset Variables">Reset</button>
+      </div>
+    </div>
+    <div id="parameter-sliders-container" class="sliders-stack"></div>
+  </aside>
+
+  <!-- Scroll-Driven Spatial Experience -->
+  <main id="scroll-experience" class="scroll-experience">
+    <!-- SECTION 0: HERO -->
+    <section id="section-hero" class="spatial-section hero-section" data-world="hero">
+      <div class="hero-content">
+        <div class="eyebrow-pill">SPATIAL DISCOVERY &amp; AUTONOMOUS FORMULA ENGINE</div>
+        <h1 class="hero-headline">
+          Where Forgotten Logic<br />
+          <span class="gradient-text">Becomes Living Space.</span>
+        </h1>
+        <p class="hero-subcopy">
+          Countless breakthroughs vanished inside dusty archives before the world ever knew their names.
+          Scroll through 4K spatial reconstructions of overlooked mathematical frameworks—then synthesize
+          your own real-world problems into autonomous 3D computational machines.
+        </p>
+        <div class="hero-cta-group">
+          <a href="#section-wessel" class="primary-cta">Explore the Unseen Archive</a>
+          <a href="#section-lab" class="secondary-cta">Launch Formula Machine</a>
+        </div>
+      </div>
+      <div class="scroll-cue" aria-hidden="true">
+        <span>SCROLL TO TRAVERSE DIMENSIONS</span>
+        <div class="scroll-line"></div>
+      </div>
+    </section>
+
+    <!-- SECTION 1: CASPAR WESSEL (1799) -->
+    <section id="section-wessel" class="spatial-section theorem-section align-left" data-world="wessel">
+      <article class="theorem-card glass-surface">
+        <div class="card-meta">
+          <span class="archive-index">ARCHIVE 01 // ROYAL DANISH ACADEMY</span>
+          <span class="archive-status">UNREAD FOR 98 YEARS</span>
+        </div>
+        <h2 class="theorem-title">Caspar Wessel’s Geometric Complex &amp; Spatial Rotors</h2>
+        <p class="theorem-year">1799 — <em>Om Direktionens analytiske Betegning</em></p>
+        <p class="theorem-body">
+          A century before vector algebra was formalized, a land surveyor mapped imaginary numbers onto
+          perpendicular spatial axes and discovered how direction-line multiplication rotates objects in 3D space.
+          His treatise sat unopened in Copenhagen archives for nearly a hundred years while others claimed the plane.
+        </p>
+        <div class="equation-box">
+          <code>(cos α + ε sin α) · (cos β + ε sin β) = cos(α + β) + ε sin(α + β)</code>
+        </div>
+        <ul class="visual-legend">
+          <li><strong>3D Construct:</strong> Orthogonal rotor gimbal &amp; complex phase-field lattice</li>
+          <li><strong>Interactive Control:</strong> Adjust Phase Angle (θ), Spatial Twist, and Rotor Harmonics</li>
+        </ul>
+      </article>
+    </section>
+
+    <!-- SECTION 2: PIETRO MENGOLI (1650) -->
+    <section id="section-mengoli" class="spatial-section theorem-section align-right" data-world="mengoli">
+      <article class="theorem-card glass-surface">
+        <div class="card-meta">
+          <span class="archive-index">ARCHIVE 02 // BOLOGNA QUADRATURES</span>
+          <span class="archive-status">PRE-CALCULUS INFINITE SERIES</span>
+        </div>
+        <h2 class="theorem-title">Pietro Mengoli’s Alternating Harmonic &amp; Hyperbolic Convergence</h2>
+        <p class="theorem-year">1650 — <em>Novae quadraturae arithmeticae</em></p>
+        <p class="theorem-body">
+          Decades before Newton and Leibniz published calculus, Mengoli proved the divergence of the harmonic series,
+          evaluated alternating reciprocal sums to ln(2), and sliced hyperbolic areas using nested infinite progressions—only
+          for his sparse printing to vanish into obscurity.
+        </p>
+        <div class="equation-box">
+          <code>∑ (-1)^(n+1) / n = 1 - 1/2 + 1/3 - 1/4 + ... = ln(2)</code>
+        </div>
+        <ul class="visual-legend">
+          <li><strong>3D Construct:</strong> Logarithmic convergence spiral &amp; hyperbolic quadrature ribbons</li>
+          <li><strong>Interactive Control:</strong> Modulate Series Terms (N), Damping Decay, and Spiral Pitch</li>
+        </ul>
+      </article>
+    </section>
+
+    <!-- SECTION 3: ETTORE MAJORANA (1930s) -->
+    <section id="section-majorana" class="spatial-section theorem-section align-left" data-world="majorana">
+      <article class="theorem-card glass-surface">
+        <div class="card-meta">
+          <span class="archive-index">ARCHIVE 03 // PISA VOLUMETTI NOTEBOOKS</span>
+          <span class="archive-status">UNPUBLISHED MANUSCRIPTS</span>
+        </div>
+        <h2 class="theorem-title">Majorana’s <em>Volumetti</em> Hydrodynamic Quantum Scattering</h2>
+        <p class="theorem-year">1928–1937 — Unpublished Notebooks I–V</p>
+        <p class="theorem-body">
+          Locked away in five pocket notebooks unexamined for decades, these derivations reformulated quantum
+          wave-packet scattering as classical fluid vortex dynamics and real-valued self-conjugate spinor fields
+          where particle and antiparticle become indistinguishable.
+        </p>
+        <div class="equation-box">
+          <code>i γ^μ ∂_μ ψ - m ψ = 0 , &nbsp; ψ = ψ^c (Self-Conjugate Spinor Field)</code>
+        </div>
+        <ul class="visual-legend">
+          <li><strong>3D Construct:</strong> Dual-chiral probability cloud &amp; toroidal vortex interference</li>
+          <li><strong>Interactive Control:</strong> Tune Chiral Coupling, Vortex Density, and Wave Coherence</li>
+        </ul>
+      </article>
+    </section>
+
+    <!-- SECTION 4: WANG ZHENYI (1790s) -->
+    <section id="section-zhenyi" class="spatial-section theorem-section align-right" data-world="zhenyi">
+      <article class="theorem-card glass-surface">
+        <div class="card-meta">
+          <span class="archive-index">ARCHIVE 04 // PRIVATE FAMILY FOLIOS</span>
+          <span class="archive-status">CENTURY IN OBSCURITY</span>
+        </div>
+        <h2 class="theorem-title">Wang Zhenyi’s Celestial Shadow-Cone &amp; Spherical Trigonometry</h2>
+        <p class="theorem-year">1792 — <em>The Explanation of a Lunar Eclipse</em></p>
+        <p class="theorem-body">
+          Working outside imperial academies and passing away at 29, she constructed a physical-geometric model
+          of solar-terrestrial-lunar umbral cones and simplified spherical trigonometric ratios so any observer could
+          predict orbital occultations without mystification.
+        </p>
+        <div class="equation-box">
+          <code>sin(δ) = sin(ε) · sin(λ) , &nbsp; R_umbra = R_earth - d · tan(θ_solar)</code>
+        </div>
+        <ul class="visual-legend">
+          <li><strong>3D Construct:</strong> Ray-traced umbral shadow cone &amp; spherical meridian rings</li>
+          <li><strong>Interactive Control:</strong> Shift Orbital Inclination, Nodal Precession, and Umbra Ratio</li>
+        </ul>
+      </article>
+    </section>
+
+    <!-- SECTION 5: KARL PETERSON (1853) -->
+    <section id="section-peterson" class="spatial-section theorem-section align-left" data-world="peterson">
+      <article class="theorem-card glass-surface">
+        <div class="card-meta">
+          <span class="archive-index">ARCHIVE 05 // DORPAT CANDIDATE THESIS</span>
+          <span class="archive-status">UNDISCOVERED FOR 50 YEARS</span>
+        </div>
+        <h2 class="theorem-title">Karl Peterson’s Fundamental Equations of Curved Surfaces</h2>
+        <p class="theorem-year">1853 — <em>Über die Biegung der Flächen</em></p>
+        <p class="theorem-body">
+          Working in isolation without a university chair, Peterson derived the fundamental compatibility equations
+          governing how any 2D membrane bends inside 3D space—pre-dating Mainardi and Codazzi—and mapped isometric
+          surface deformations before dying unrecognized.
+        </p>
+        <div class="equation-box">
+          <code>∂L/∂v - ∂M/∂u = L Γ¹₁₂ + M(Γ²₁₂ - Γ¹₁₁) - N Γ²₁₁</code>
+        </div>
+        <ul class="visual-legend">
+          <li><strong>3D Construct:</strong> Live isometric Gaussian curvature manifold &amp; principal stress lines</li>
+          <li><strong>Interactive Control:</strong> Bend Mean Curvature, Isometric Twist, and Tensor Resolution</li>
+        </ul>
+      </article>
+    </section>
+
+    <!-- SECTION 6: FRANCIS SKINNER (1935) -->
+    <section id="section-skinner" class="spatial-section theorem-section align-right" data-world="skinner">
+      <article class="theorem-card glass-surface">
+        <div class="card-meta">
+          <span class="archive-index">ARCHIVE 06 // SEALED CAMBRIDGE BOXES</span>
+          <span class="archive-status">UNPUBLISHED FACTORY NOTES</span>
+        </div>
+        <h2 class="theorem-title">Francis Skinner’s Cyclic Prime-Residue &amp; Modular Lattices</h2>
+        <p class="theorem-year">1934–1939 — Continuous 20-Foot Scroll Calculations</p>
+        <p class="theorem-body">
+          Leaving academic prestige for a factory floor before passing at 29, Skinner filled continuous 20-foot paper
+          rolls with deep modular arithmetic symmetries and cyclic residue structures around Fermat’s Little Theorem—hidden
+          inside private boxes for decades.
+        </p>
+        <div class="equation-box">
+          <code>a^(p-1) ≡ 1 (mod p) , &nbsp; Φ_p(k) = exp(2πi · a^k / p)</code>
+        </div>
+        <ul class="visual-legend">
+          <li><strong>3D Construct:</strong> Concentric modular arithmetic clock-rings &amp; prime chord web</li>
+          <li><strong>Interactive Control:</strong> Change Prime Modulus (p), Primitive Root (a), and Lattice Depth</li>
+        </ul>
+      </article>
+    </section>
+
+    <!-- SECTION 7: AUTONOMOUS FORMULA & 3D CONSTRUCT ENGINE -->
+    <section id="section-lab" class="spatial-section lab-section" data-world="lab">
+      <div class="lab-shell glass-surface">
+        <div class="lab-header">
+          <div>
+            <span class="eyebrow-pill">LIVING COMPUTATIONAL CONSTRUCTS</span>
+            <h2 class="lab-title">Autonomous Problem-to-3D Formula Machine</h2>
+            <p class="lab-subtitle">
+              Don’t leave your logic trapped on paper. Describe any real-world constraint—AI token budgets,
+              mechanical tolerances, physics waves, or daily systems—or enter a mathematical expression directly.
+              Our engine compiles it into an interactive, self-solving 3D machine.
+            </p>
+          </div>
+        </div>
+
+        <div class="lab-grid">
+          <!-- Left Column: Input & Synthesis Controls -->
+          <div class="lab-controls-col">
+            <div class="preset-strip" id="lab-preset-chips">
+              <button type="button" class="preset-chip active" data-preset="tokens">AI Token &amp; Compute Budget</button>
+              <button type="button" class="preset-chip" data-preset="harmonic">Coupled Wave Interference</button>
+              <button type="button" class="preset-chip" data-preset="orbital">Gravitational Slingshot</button>
+              <button type="button" class="preset-chip" data-preset="entropy">Thermodynamic Efficiency</button>
+            </div>
+
+            <label class="field-label" for="lab-domain-select">System Domain</label>
+            <select id="lab-domain-select" class="glass-input">
+              <option value="compute">AI Compute &amp; Token Allocation</option>
+              <option value="physics">Classical &amp; Quantum Physics</option>
+              <option value="geometry">Hyper-Dimensional Geometry</option>
+              <option value="systems">Everyday Systems &amp; Logistics</option>
+            </select>
+
+            <label class="field-label" for="lab-prompt-input">Describe Your Problem, Constraint, or Raw Idea</label>
+            <textarea
+              id="lab-prompt-input"
+              class="glass-textarea"
+              rows="3"
+              placeholder="Example: I run 4 AI models with a 65,536 token ceiling and want to balance latency vs reasoning depth without hitting my 5-hour quota..."
+            ></textarea>
+
+            <div class="lab-btn-row">
+              <button id="lab-generate-ai-btn" class="primary-cta" type="button">
+                Synthesize with Gemini API
+              </button>
+              <button id="lab-compile-local-btn" class="secondary-cta" type="button">
+                Compile Local Formula
+              </button>
+            </div>
+
+            <label class="field-label" for="lab-expression-input">Direct Computerized Formula f(u, v, t)</label>
+            <div class="formula-input-group">
+              <input
+                id="lab-expression-input"
+                type="text"
+                class="glass-input code-font"
+                value="sin(u * p1 - t * p2) * cos(v * p3) * p4"
+                aria-label="Direct mathematical formula"
+              />
+            </div>
+
+            <p id="lab-ai-status" class="status-line" role="status">
+              Ready — Local AST Solver &amp; Gemini API Bridge online.
+            </p>
+          </div>
+
+          <!-- Right Column: Compiled Construct Readout -->
+          <div class="lab-output-col">
+            <div class="construct-card">
+              <div class="construct-top">
+                <span id="lab-topology-badge" class="topology-tag">TOPOLOGY: PARAMETRIC MANIFOLD</span>
+                <div class="construct-actions">
+                  <button id="lab-save-vault-btn" class="mini-btn accent" type="button">Save to Vault</button>
+                  <button id="lab-export-json-btn" class="mini-btn" type="button">Export JSON</button>
+                </div>
+              </div>
+
+              <h3 id="lab-generated-title" class="construct-title">Harmonic Constraint Equilibrium</h3>
+              <p id="lab-generated-explanation" class="construct-desc">
+                Maps multi-variable resource limits onto a continuous phase-coupled surface where peaks indicate
+                optimal throughput and troughs reveal bottleneck saturation.
+              </p>
+
+              <div class="equation-box highlight">
+                <code id="lab-generated-equation">f(u, v, t) = sin(u · p1 - t · p2) · cos(v · p3) · p4</code>
+              </div>
+
+              <div class="solver-metrics">
+                <div class="metric-tile">
+                  <span class="metric-label">CONVERGENCE</span>
+                  <span id="metric-convergence" class="metric-value">99.4%</span>
+                </div>
+                <div class="metric-tile">
+                  <span class="metric-label">STABILITY INDEX</span>
+                  <span id="metric-stability" class="metric-value">0.982</span>
+                </div>
+                <div class="metric-tile">
+                  <span class="metric-label">ACTIVE NODES</span>
+                  <span id="metric-nodes" class="metric-value">16,384</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- SECTION 8: SCROLL-REVEAL CREATOR CREDITS -->
+    <section id="section-credits" class="spatial-section credits-section" data-world="credits">
+      <div id="creator-monolith" class="creator-monolith glass-surface">
+        <span class="eyebrow-pill">ARCHITECT &amp; CREATOR ATTRIBUTION</span>
+        <h2 id="creator-name" class="creator-signature">G. U. Sanjiv</h2>
+        <p id="creator-manifesto" class="creator-manifesto">
+          Conceived and architected so that no human insight, unfinished theorem, or self-taught breakthrough
+          ever vanishes unseen again. Every visitor holds the power to turn raw intuition into living 3D proof.
+        </p>
+        <div class="credits-meta-grid">
+          <div class="credit-item">
+            <span class="credit-role">VISION &amp; SYSTEM ARCHITECTURE</span>
+            <span class="credit-val">G. U. Sanjiv</span>
+          </div>
+          <div class="credit-item">
+            <span class="credit-role">SPATIAL RENDER PIPELINE</span>
+            <span class="credit-val">4K WebGL / Three.js Procedural Core</span>
+          </div>
+          <div class="credit-item">
+            <span class="credit-role">AUTONOMOUS SOLVER</span>
+            <span class="credit-val">AST Formula Compiler + Gemini Bridge</span>
+          </div>
+        </div>
+        <button id="back-to-top-btn" class="secondary-cta" type="button">Return to Origin</button>
+      </div>
+    </section>
+  </main>
+
+  <!-- Modal Backdrop -->
+  <div id="modal-backdrop" class="modal-backdrop hidden" aria-hidden="true"></div>
+
+  <!-- Settings Modal (Gemini API Key & 4K Render Quality) -->
+  <div id="settings-modal" class="glass-modal hidden" role="dialog" aria-modal="true" aria-labelledby="settings-modal-title">
+    <div class="modal-header">
+      <h3 id="settings-modal-title">Engine &amp; Gemini API Configuration</h3>
+      <button class="close-modal-btn" data-close-modal type="button" aria-label="Close Settings">&times;</button>
+    </div>
+    <div class="modal-body">
+      <p class="modal-note">
+        Your API key is stored strictly in your browser’s local storage and is never uploaded to GitHub.
+      </p>
+
+      <label class="field-label" for="gemini-api-key-input">Gemini API Key</label>
+      <input
+        id="gemini-api-key-input"
+        type="password"
+        class="glass-input"
+        placeholder="AIzaSy..."
+        autocomplete="off"
+      />
+
+      <label class="field-label" for="gemini-model-select">Reasoning Model</label>
+      <select id="gemini-model-select" class="glass-input">
+        <option value="gemini-2.5-flash">Gemini Flash (Fast Formula Synthesis)</option>
+        <option value="gemini-2.5-pro">Gemini Pro (Deep Mathematical Proof)</option>
+      </select>
+
+      <label class="field-label" for="render-quality-select">4K Spatial Render Clarity</label>
+      <select id="render-quality-select" class="glass-input">
+        <option value="2">4K Ultra (DPR 2.0 + Bloom Upscale)</option>
+        <option value="1.5">2K Balanced (DPR 1.5)</option>
+        <option value="1">1080p Performance (DPR 1.0)</option>
+      </select>
+
+      <p id="settings-status" class="status-line"></p>
+    </div>
+    <div class="modal-footer">
+      <button id="clear-api-key-btn" class="mini-btn" type="button">Clear Key</button>
+      <button id="save-settings-btn" class="primary-cta" type="button">Save Configuration</button>
+    </div>
+  </div>
+
+  <!-- Researcher Login / Profile Modal -->
+  <div id="auth-modal" class="glass-modal hidden" role="dialog" aria-modal="true" aria-labelledby="auth-modal-title">
+    <div class="modal-header">
+      <h3 id="auth-modal-title">Unseen Thinker Identity</h3>
+      <button class="close-modal-btn" data-close-modal type="button" aria-label="Close Identity Modal">&times;</button>
+    </div>
+    <div class="modal-body">
+      <div id="auth-form-view">
+        <div class="auth-tabs">
+          <button id="auth-tab-login" class="auth-tab active" type="button">Sign In</button>
+          <button id="auth-tab-register" class="auth-tab" type="button">Create Profile</button>
+        </div>
+
+        <label class="field-label" for="auth-username-input">Thinker Name / Handle</label>
+        <input id="auth-username-input" type="text" class="glass-input" placeholder="e.g., G. U. Sanjiv" />
+
+        <label class="field-label" for="auth-email-input">Research Email</label>
+        <input id="auth-email-input" type="email" class="glass-input" placeholder="thinker@unseenlogic.org" />
+
+        <label class="field-label" for="auth-role-input">Primary Discipline</label>
+        <input id="auth-role-input" type="text" class="glass-input" placeholder="Spatial Physics, Self-Taught Math, AI Systems..." />
+
+        <button id="auth-submit-btn" class="primary-cta full-width" type="button">Enter Spatial Lab</button>
+      </div>
+
+      <div id="auth-profile-view" class="hidden">
+        <div class="profile-banner">
+          <div class="profile-avatar" id="profile-avatar-initials">GU</div>
+          <div>
+            <h4 id="profile-display-name">G. U. Sanjiv</h4>
+            <p id="profile-display-role" class="modal-note">Spatial Architect</p>
+          </div>
+        </div>
+        <button id="auth-logout-btn" class="secondary-cta full-width" type="button">Sign Out</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Slide-Over Theory Vault Drawer -->
+  <aside id="vault-drawer" class="vault-drawer glass-surface hidden" aria-label="Saved Theory Vault">
+    <div class="drawer-header">
+      <h3>Saved Theory Vault</h3>
+      <button id="close-vault-btn" class="close-modal-btn" type="button" aria-label="Close Vault">&times;</button>
+    </div>
+    <div class="drawer-tools">
+      <input id="vault-search-input" type="search" class="glass-input" placeholder="Filter saved constructs..." />
+      <div class="drawer-btn-row">
+        <button id="vault-export-all-btn" class="mini-btn" type="button">Export All</button>
+        <button id="vault-import-btn" class="mini-btn" type="button">Import JSON</button>
+      </div>
+    </div>
+    <div id="vault-list" class="vault-list"></div>
+  </aside>
+
+  <!-- Toast Notification Container -->
+  <div id="toast-container" class="toast-container" aria-live="polite"></div>
+
+  <script type="module" src="./main.js"></script>
 </body>
 </html>
