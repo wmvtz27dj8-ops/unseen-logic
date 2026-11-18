@@ -182,6 +182,21 @@ export class AuthVault {
       this._notify('Unable to encode share URL', 'warn');
     }
   }
+  checkUrlForSharedConstruct() {
+    this._checkSharedHash();
+  }
+
+  open(domain = null) {
+    this.openVault(domain);
+  }
+
+  close() {
+    this.closeVault();
+  }
+
+  toggle() {
+    this.toggleVault();
+  }
 
   _checkSharedHash() {
     const hash = window.location.hash || '';
