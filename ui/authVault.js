@@ -432,21 +432,45 @@ export class AuthVault {
   }
 
   _bindOrCreateUI() {
+        const syncHudBadges = () => {
+      const total = String(this.getAllTheories().length);
+      document.querySelectorAll('[id*="vault"][id*="count"], [id*="vault"][id*="badge"], [class*="vault-count"], [class*="vault-badge"], .badge').forEach((el) => {
+        if (!el.closest('#ul-vault-overlay')) {
+          el.textContent = total;
+        }
+      });
+      document.querySelectorAll('button, [role="button"]').forEach((btn) => {
+        if (btn.closest('#ul-vault-overlay')) return;
+        for (const child of btn.querySelectorAll('span, sup, div')) {
+          if (child.textContent.trim() === '0') {
+            child.textContent = total;
+          }
+        }
+      });
+    };
+    syncHudBadges();
+    setTimeout(syncHudBadges, 600);
+
     document.addEventListener(
       'click',
       (e) => {
         if (e.target.closest('#ul-vault-overlay, #ul-auth-modal')) return;
         const trigger = e.target.closest('button, a, [role="button"]');
         if (!trigger) return;
-        const label = `${trigger.id} ${trigger.className} ${trigger.textContent} ${trigger.getAttribute('aria-label') || ''} ${trigger.getAttribute('title') || ''}`.toLowerCase();
+        const label = `${trigger.id} ${trigger.className} ${trigger.textContent} ${trigger.getAttribute('aria-label') || ''} ${trigger.getAttribute('title') || ''} ${trigger.dataset?.action || ''} ${trigger.dataset?.target || ''}`.toLowerCase();
         if (label.includes('vault') || label.includes('archive')) {
           e.preventDefault();
           e.stopImmediatePropagation();
           this.openVault();
+        } else if (label.includes('sign in') || label.includes('signin') || label.includes('auth')) {
+          e.preventDefault();
+          e.stopImmediatePropagation();
+          this.openAuthModal();
         }
       },
       true
     );
+
 
     let overlay = document.getElementById('ul-vault-overlay');
     if (!overlay) {
