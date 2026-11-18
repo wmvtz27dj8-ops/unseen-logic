@@ -16,6 +16,7 @@ const DOMAIN_META = [
 
 export class AuthVault {
   constructor(options = {}) {
+    this.onLoadConstruct = typeof options.onLoadConstruct === 'function' ? options.onLoadConstruct : null;
     this.onLaunchConstruct = typeof options.onLaunchConstruct === 'function' ? options.onLaunchConstruct : null;
     this.onNotify = typeof options.onNotify === 'function' ? options.onNotify : null;
     this.constructBuilder = options.constructBuilder || null;
@@ -30,11 +31,22 @@ export class AuthVault {
     this.isOpen = false;
     this.renderedCount = 0;
     this.pageSize = 36;
+    this._legacyObserver = null;
+
+    this._onKeyDown = (e) => {
+      if (e.key === 'Escape') {
+        if (this.authModalEl?.classList.contains('is-open')) {
+          this.closeAuthModal();
+        } else if (this.isOpen) {
+          this.closeVault();
+        }
+      }
+    };
 
     this._injectStyles();
     this._bindOrCreateUI();
-    this._checkSharedHash();
-    this.renderVault();
+    this._interceptLegacyVaultDrawer();
+    this.renderVault(true);
   }
 
   _loadUser() {
@@ -74,20 +86,32 @@ export class AuthVault {
     try {
       localStorage.setItem(STORAGE_VAULT_KEY, JSON.stringify(this.customTheories));
     } catch {
-      this._notify('Storage limit reached; export JSON backup.', 'warn');
+      this._notify('Storage limit reached; export JSON backup.', 'error');
     }
   }
 
-  _notify(message, level = 'info') {
+  _notify(message, type = 'info') {
     if (this.onNotify) {
-      this.onNotify(message, level);
+      this.onNotify(message, type);
     } else if (this.hudController && typeof this.hudController.showToast === 'function') {
-      this.hudController.showToast(message);
+      this.hudController.showToast(message, type);
     }
   }
 
   getAllTheories() {
     return [...this.customTheories, ...this.archive];
+  }
+
+  getConstructs() {
+    return this.getAllTheories();
+  }
+
+  saveConstruct(theory) {
+    return this.saveTheory(theory);
+  }
+
+  addConstruct(theory) {
+    return this.saveTheory(theory);
   }
 
   saveTheory(theory) {
@@ -122,7 +146,7 @@ export class AuthVault {
 
     this._persistCustomTheories();
     this.renderVault(true);
-    this._notify(`Saved "${entry.title}" (${entry.id}) to Theory Vault`);
+    this._notify(`Saved "${entry.title}" (${entry.id}) to Theory Vault`, 'success');
     return entry;
   }
 
@@ -132,17 +156,19 @@ export class AuthVault {
     if (this.customTheories.length !== before) {
       this._persistCustomTheories();
       this.renderVault(true);
-      this._notify(`Removed ${id} from Saved Vault`);
+      this._notify(`Removed ${id} from Saved Vault`, 'info');
     }
   }
 
-  launchEntry(entry) {
+  launchEntry(entry, opts = {}) {
     if (!entry) return;
 
-    if (this.onLaunchConstruct) {
+    if (this.onLoadConstruct) {
+      this.onLoadConstruct(entry, { scrollToLab: opts.scrollToLab !== false });
+    } else if (this.onLaunchConstruct) {
       this.onLaunchConstruct(entry);
-    } else if (this.constructBuilder && typeof this.constructBuilder.loadConstruct === 'function') {
-      this.constructBuilder.loadConstruct(entry);
+    } else if (this.constructBuilder && typeof this.constructBuilder.applyConstructConfig === 'function') {
+      this.constructBuilder.applyConstructConfig(entry);
     }
 
     window.dispatchEvent(
@@ -151,8 +177,12 @@ export class AuthVault {
       })
     );
 
-    this._notify(`Loaded ${entry.id}: ${entry.title}`);
-    this.closeVault();
+    if (!opts.silent) {
+      this._notify(`Loaded ${entry.id}: ${entry.title}`, 'success');
+    }
+    if (!opts.keepClosed) {
+      this.closeVault();
+    }
   }
 
   shareEntryURL(entry) {
@@ -177,39 +207,30 @@ export class AuthVault {
         navigator.clipboard.writeText(url);
       }
       window.history.replaceState(null, '', `#construct=${payload}`);
-      this._notify(`Share link copied for ${entry.id}`);
+      this._notify(`Share link copied for ${entry.id}`, 'success');
     } catch {
-      this._notify('Unable to encode share URL', 'warn');
+      this._notify('Unable to encode share URL', 'error');
     }
   }
+
   checkUrlForSharedConstruct() {
-    this._checkSharedHash();
-  }
-
-  open(domain = null) {
-    this.openVault(domain);
-  }
-
-  close() {
-    this.closeVault();
-  }
-
-  toggle() {
-    this.toggleVault();
-  }
-
-  _checkSharedHash() {
     const hash = window.location.hash || '';
-    if (!hash.startsWith('#construct=')) return;
+    if (!hash.startsWith('#construct=')) return null;
     try {
       const encoded = hash.slice('#construct='.length);
       const decoded = JSON.parse(decodeURIComponent(atob(encoded)));
       if (decoded && decoded.formula) {
-        setTimeout(() => this.launchEntry(decoded), 250);
+        this.launchEntry(decoded, { scrollToLab: true, keepClosed: true, silent: true });
+        return decoded;
       }
     } catch {
       // Ignore malformed hash payloads
     }
+    return null;
+  }
+
+  _checkSharedHash() {
+    return this.checkUrlForSharedConstruct();
   }
 
   exportVaultJSON() {
@@ -230,7 +251,7 @@ export class AuthVault {
     a.click();
     a.remove();
     URL.revokeObjectURL(url);
-    this._notify(`Exported ${bundle.totalEntries} theories as JSON`);
+    this._notify(`Exported ${bundle.totalEntries} theories as JSON`, 'success');
   }
 
   importVaultJSON(file) {
@@ -254,9 +275,9 @@ export class AuthVault {
             imported += 1;
           }
         });
-        this._notify(`Imported ${imported} custom theories into Vault`);
+        this._notify(`Imported ${imported} custom theories into Vault`, 'success');
       } catch {
-        this._notify('Invalid JSON vault bundle', 'warn');
+        this._notify('Invalid JSON vault bundle', 'error');
       }
     };
     reader.readAsText(file);
@@ -264,7 +285,7 @@ export class AuthVault {
 
   getFilteredEntries() {
     const q = this.searchQuery.trim().toLowerCase();
-    let pool =
+    const pool =
       this.activeDomain === 'saved'
         ? this.customTheories
         : this.activeDomain === 'all'
@@ -286,12 +307,38 @@ export class AuthVault {
     });
   }
 
+  openVaultDrawer(domain = null) {
+    this.openVault(domain);
+  }
+
+  closeVaultDrawer() {
+    this.closeVault();
+  }
+
+  toggleVaultDrawer() {
+    this.toggleVault();
+  }
+
+  open(domain = null) {
+    this.openVault(domain);
+  }
+
+  close() {
+    this.closeVault();
+  }
+
+  toggle() {
+    this.toggleVault();
+  }
+
   openVault(domain = null) {
     if (domain) {
       this.activeDomain = domain;
     }
+    this._hideLegacyDrawers();
     this.isOpen = true;
     if (this.overlayEl) {
+      this.overlayEl.style.zIndex = '99999';
       this.overlayEl.classList.add('is-open');
       this.overlayEl.setAttribute('aria-hidden', 'false');
     }
@@ -305,6 +352,7 @@ export class AuthVault {
       this.overlayEl.classList.remove('is-open');
       this.overlayEl.setAttribute('aria-hidden', 'true');
     }
+    this._hideLegacyDrawers();
   }
 
   toggleVault() {
@@ -317,6 +365,7 @@ export class AuthVault {
 
   openAuthModal() {
     if (this.authModalEl) {
+      this.authModalEl.style.zIndex = '100000';
       this.authModalEl.classList.add('is-open');
     }
   }
@@ -327,35 +376,77 @@ export class AuthVault {
     }
   }
 
-  _bindOrCreateUI() {
-    const existingTriggers = document.querySelectorAll('[data-open-vault], #open-vault-btn, #vault-toggle-btn');
-    existingTriggers.forEach((btn) => {
-      btn.addEventListener('click', (e) => {
-        e.preventDefault();
-        this.toggleVault();
-      });
-    });
-       document.addEventListener('click', (e) => {
-      if (e.target.closest('#ul-vault-overlay, #ul-auth-modal')) return;
-      const trigger = e.target.closest('button, a, [role="button"]');
-      if (!trigger) return;
-      const label = `${trigger.id} ${trigger.className} ${trigger.textContent} ${trigger.getAttribute('aria-label') || ''} ${trigger.getAttribute('title') || ''}`.toLowerCase();
-      if (label.includes('vault') || label.includes('archive')) {
-        e.preventDefault();
-        e.stopImmediatePropagation();
-        if (this.overlayEl) this.overlayEl.style.zIndex = '99999';
-        this.openVault();
+  _hideLegacyDrawers() {
+    document.querySelectorAll('[id*="vault"], [class*="vault"]').forEach((el) => {
+      if (el.closest('#ul-vault-overlay, #ul-auth-modal')) return;
+      if (el.id === 'ul-vault-overlay' || el.id === 'ul-auth-modal') return;
+      if (el.matches('button, a, span, svg, path, input')) return;
+      if (
+        el.classList.contains('open') ||
+        el.classList.contains('active') ||
+        el.classList.contains('is-open') ||
+        el.classList.contains('visible') ||
+        el.getAttribute('aria-hidden') === 'false'
+      ) {
+        el.classList.remove('open', 'active', 'is-open', 'visible');
+        el.setAttribute('aria-hidden', 'true');
       }
-    }, true);
-
-
-    const existingAuthTriggers = document.querySelectorAll('[data-open-auth], #open-auth-btn, #auth-toggle-btn');
-    existingAuthTriggers.forEach((btn) => {
-      btn.addEventListener('click', (e) => {
-        e.preventDefault();
-        this.openAuthModal();
-      });
     });
+  }
+
+  _interceptLegacyVaultDrawer() {
+    if (typeof MutationObserver === 'undefined') return;
+    this._legacyObserver = new MutationObserver((mutations) => {
+      for (const m of mutations) {
+        const el = m.target;
+        if (!(el instanceof HTMLElement)) continue;
+        if (el.id === 'ul-vault-overlay' || el.id === 'ul-auth-modal') continue;
+        if (el.closest('#ul-vault-overlay, #ul-auth-modal')) continue;
+        if (el.matches('button, a, span, svg, path, input')) continue;
+
+        const ident = `${el.id} ${el.className}`.toLowerCase();
+        if (!ident.includes('vault')) continue;
+
+        const opened =
+          el.classList.contains('open') ||
+          el.classList.contains('active') ||
+          el.classList.contains('is-open') ||
+          el.classList.contains('visible') ||
+          el.getAttribute('aria-hidden') === 'false';
+
+        if (opened) {
+          el.classList.remove('open', 'active', 'is-open', 'visible');
+          el.setAttribute('aria-hidden', 'true');
+          if (!this.isOpen) {
+            this.openVault();
+          }
+        }
+      }
+    });
+
+    this._legacyObserver.observe(document.body, {
+      subtree: true,
+      attributes: true,
+      attributeFilter: ['class', 'style', 'hidden', 'aria-hidden']
+    });
+  }
+
+  _bindOrCreateUI() {
+    document.addEventListener(
+      'click',
+      (e) => {
+        if (e.target.closest('#ul-vault-overlay, #ul-auth-modal')) return;
+        const trigger = e.target.closest('button, a, [role="button"]');
+        if (!trigger) return;
+        const label = `${trigger.id} ${trigger.className} ${trigger.textContent} ${trigger.getAttribute('aria-label') || ''} ${trigger.getAttribute('title') || ''}`.toLowerCase();
+        if (label.includes('vault') || label.includes('archive')) {
+          e.preventDefault();
+          e.stopImmediatePropagation();
+          this.openVault();
+        }
+      },
+      true
+    );
 
     let overlay = document.getElementById('ul-vault-overlay');
     if (!overlay) {
@@ -483,7 +574,7 @@ export class AuthVault {
     authModal.querySelector('#ul-auth-logout-btn')?.addEventListener('click', () => {
       this._saveUser(null);
       this.closeAuthModal();
-      this._notify('Signed out of Operator session');
+      this._notify('Signed out of Operator session', 'info');
     });
     authModal.querySelector('#ul-auth-form')?.addEventListener('submit', (e) => {
       e.preventDefault();
@@ -492,18 +583,10 @@ export class AuthVault {
       if (!handle) return;
       this._saveUser({ handle, org, signedInAt: new Date().toISOString() });
       this.closeAuthModal();
-      this._notify(`Operator active: ${handle}`);
+      this._notify(`Operator active: ${handle}`, 'success');
     });
 
-    window.addEventListener('keydown', (e) => {
-      if (e.key === 'Escape') {
-        if (this.authModalEl?.classList.contains('is-open')) {
-          this.closeAuthModal();
-        } else if (this.isOpen) {
-          this.closeVault();
-        }
-      }
-    });
+    window.addEventListener('keydown', this._onKeyDown);
 
     this._renderDomainPills();
     this._syncAuthUI();
@@ -626,6 +709,16 @@ export class AuthVault {
     }
   }
 
+  dispose() {
+    if (this._legacyObserver) {
+      this._legacyObserver.disconnect();
+      this._legacyObserver = null;
+    }
+    window.removeEventListener('keydown', this._onKeyDown);
+    this.overlayEl?.remove();
+    this.authModalEl?.remove();
+  }
+
   _escapeHTML(str) {
     return String(str ?? '')
       .replace(/&/g, '&amp;')
@@ -643,7 +736,7 @@ export class AuthVault {
       .ul-vault-overlay {
         position: fixed;
         inset: 0;
-        z-index: 950;
+        z-index: 99999;
         background: rgba(5, 7, 13, 0.72);
         backdrop-filter: blur(28px) saturate(160%);
         -webkit-backdrop-filter: blur(28px) saturate(160%);
@@ -942,7 +1035,7 @@ export class AuthVault {
       .ul-auth-modal {
         position: fixed;
         inset: 0;
-        z-index: 980;
+        z-index: 100000;
         background: rgba(4, 6, 12, 0.76);
         backdrop-filter: blur(20px);
         display: flex;
