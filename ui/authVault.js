@@ -335,20 +335,19 @@ export class AuthVault {
         this.toggleVault();
       });
     });
-    document.addEventListener('click', (e) => {
+       document.addEventListener('click', (e) => {
       if (e.target.closest('#ul-vault-overlay, #ul-auth-modal')) return;
       const trigger = e.target.closest('button, a, [role="button"]');
       if (!trigger) return;
-      const label = `${trigger.id} ${trigger.className} ${trigger.textContent}`.toLowerCase();
+      const label = `${trigger.id} ${trigger.className} ${trigger.textContent} ${trigger.getAttribute('aria-label') || ''} ${trigger.getAttribute('title') || ''}`.toLowerCase();
       if (label.includes('vault') || label.includes('archive')) {
         e.preventDefault();
         e.stopImmediatePropagation();
-        document.querySelectorAll('.modal.active, .modal.open, [id*="vault-modal"]').forEach((m) => {
-          m.classList.remove('active', 'open', 'is-open');
-        });
+        if (this.overlayEl) this.overlayEl.style.zIndex = '99999';
         this.openVault();
       }
     }, true);
+
 
     const existingAuthTriggers = document.querySelectorAll('[data-open-auth], #open-auth-btn, #auth-toggle-btn');
     existingAuthTriggers.forEach((btn) => {
